@@ -1,0 +1,11 @@
+[project]
+name = "comfyui-text-templates"
+version = "1.0.0"
+description = "Compose text by injecting wired inputs into editable templates. For chaining LLM outputs and building context."
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/YOUR_USERNAME/comfyui-text-templates"
