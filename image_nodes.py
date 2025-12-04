@@ -25,7 +25,7 @@ class LoadImagesFromFolder:
 
     RETURN_TYPES = ("IMAGE", "STRING", "INT")
     RETURN_NAMES = ("images", "filenames", "count")
-    OUTPUT_IS_LIST = (False, True, False)
+    OUTPUT_IS_LIST = (True, True, False)
     FUNCTION = "load_images"
     CATEGORY = "image"
 
@@ -66,15 +66,14 @@ class LoadImagesFromFolder:
                 img = img.resize(target_size, Image.Resampling.LANCZOS)
 
             img_array = np.array(img).astype(np.float32) / 255.0
-            images.append(img_array)
+            # Each image as individual tensor with batch dim (1, H, W, C)
+            img_tensor = torch.from_numpy(img_array).unsqueeze(0)
+            images.append(img_tensor)
 
             # Filename without extension
             filenames.append(os.path.splitext(filename)[0])
 
-        # Stack into batch tensor (BHWC format)
-        batch_tensor = torch.from_numpy(np.stack(images, axis=0))
-
-        return (batch_tensor, filenames, len(filenames))
+        return (images, filenames, len(filenames))
 
 
 class SaveTextToFile:
