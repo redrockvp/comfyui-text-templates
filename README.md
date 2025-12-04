@@ -39,6 +39,8 @@ You are a helpful assistant. The user says: Hello!
 
 ## Node Reference
 
+### Text Template
+
 | Input | Type | Description |
 |-------|------|-------------|
 | template | STRING | Multiline text with `{1}`-`{6}` placeholders |
@@ -47,6 +49,30 @@ You are a helpful assistant. The user says: Hello!
 | Output | Type | Description |
 |--------|------|-------------|
 | text | STRING | Resolved template with substitutions |
+
+### Text Box
+
+Simple text input node. Enter text and output it as a string.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| text | STRING | Multiline text input |
+
+| Output | Type | Description |
+|--------|------|-------------|
+| text | STRING | The input text |
+
+### Show Text
+
+Display text from upstream nodes. Useful for debugging and viewing LLM outputs.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| text | STRING | Text input (wired from another node) |
+
+| Output | Type | Description |
+|--------|------|-------------|
+| text | STRING | Pass-through of the input text |
 
 ## License
 
