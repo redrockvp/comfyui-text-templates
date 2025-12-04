@@ -20,6 +20,7 @@ class LoadImagesFromFolder:
             },
             "optional": {
                 "extension_filter": ("STRING", {"default": "", "multiline": False}),
+                "limit": ("INT", {"default": 0, "min": 0, "max": 10000}),
             },
         }
 
@@ -29,7 +30,7 @@ class LoadImagesFromFolder:
     FUNCTION = "load_images"
     CATEGORY = "image"
 
-    def load_images(self, folder_path, extension_filter=""):
+    def load_images(self, folder_path, extension_filter="", limit=0):
         if not folder_path or not os.path.isdir(folder_path):
             raise ValueError(f"Invalid folder path: {folder_path}")
 
@@ -48,6 +49,10 @@ class LoadImagesFromFolder:
 
         if not image_files:
             raise ValueError(f"No image files found in: {folder_path}")
+
+        # Apply limit if specified (0 = no limit)
+        if limit > 0:
+            image_files = image_files[:limit]
 
         # Load all images
         images = []
