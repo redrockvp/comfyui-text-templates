@@ -1,9 +1,32 @@
 {
     "id": "8f4e2a1b-3c5d-4e6f-8a9b-1c2d3e4f5a6b",
     "revision": 0,
-    "last_node_id": 11,
+    "last_node_id": 12,
     "last_link_id": 12,
     "nodes": [
+        {
+            "id": 12,
+            "type": "Note",
+            "pos": [
+                -480,
+                -60
+            ],
+            "size": [
+                450,
+                500
+            ],
+            "flags": {},
+            "order": 0,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [],
+            "properties": {},
+            "widgets_values": [
+                "LM STUDIO IMAGE CAPTIONING WORKFLOW\n\nGenerate consistent captions for AI training datasets using a local vision model.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nHOW TO USE:\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n1. Set your image folder path in LoadImagesFromFolder\n2. Set your trigger word (e.g. ohwx_style)\n3. Describe your style in Style Context\n4. Optionally customize the User Prompt\n5. Run the workflow - captions save as .txt files\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nREQUIRED CUSTOM NODES:\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nText Templates:\nhttps://github.com/redrockvp/comfyui-text-templates\n\nLM Studio Image To Text:\nhttps://github.com/ExponentialML/ComfyUI_LMStudio\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nTIPS:\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n• Use a consistent style description across your dataset\n• The trigger word appears at the start of every caption\n• Adjust temperature in LM Studio node for variety"
+            ],
+            "color": "#2a363b",
+            "bgcolor": "#3d4f55"
+        },
         {
             "id": 8,
             "type": "Note",
@@ -16,7 +39,7 @@
                 100
             ],
             "flags": {},
-            "order": 0,
+            "order": 1,
             "mode": 0,
             "inputs": [],
             "outputs": [],
