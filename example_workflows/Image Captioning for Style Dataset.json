@@ -1,8 +1,8 @@
 {
     "id": "8f4e2a1b-3c5d-4e6f-8a9b-1c2d3e4f5a6b",
     "revision": 0,
-    "last_node_id": 8,
-    "last_link_id": 6,
+    "last_node_id": 9,
+    "last_link_id": 7,
     "nodes": [
         {
             "id": 1,
@@ -21,12 +21,26 @@
             "widgets_values": ["C:/path/to/your/images", ""]
         },
         {
-            "id": 2,
+            "id": 9,
             "type": "TextBox",
-            "pos": [100, 400],
-            "size": [320, 280],
+            "pos": [100, 340],
+            "size": [320, 80],
             "flags": {},
             "order": 1,
+            "mode": 0,
+            "outputs": [
+                {"name": "text", "type": "STRING", "links": [5], "slot_index": 0}
+            ],
+            "properties": {"Node name for S&R": "TextBox"},
+            "widgets_values": ["ohwx_style"]
+        },
+        {
+            "id": 2,
+            "type": "TextBox",
+            "pos": [100, 480],
+            "size": [320, 280],
+            "flags": {},
+            "order": 2,
             "mode": 0,
             "outputs": [
                 {"name": "text", "type": "STRING", "links": [1], "slot_index": 0}
@@ -38,13 +52,13 @@
             "id": 3,
             "type": "TextTemplate",
             "pos": [500, 200],
-            "size": [400, 300],
+            "size": [400, 350],
             "flags": {},
-            "order": 2,
+            "order": 3,
             "mode": 0,
             "inputs": [
-                {"name": "text_1", "type": "STRING", "link": 1},
-                {"name": "text_2", "type": "STRING", "link": null},
+                {"name": "text_1", "type": "STRING", "link": 5},
+                {"name": "text_2", "type": "STRING", "link": 1},
                 {"name": "text_3", "type": "STRING", "link": null},
                 {"name": "text_4", "type": "STRING", "link": null},
                 {"name": "text_5", "type": "STRING", "link": null},
@@ -54,15 +68,15 @@
                 {"name": "text", "type": "STRING", "links": [3], "slot_index": 0}
             ],
             "properties": {"Node name for S&R": "TextTemplate"},
-            "widgets_values": ["You are captioning images for an AI training dataset. The images share a consistent visual style described below.\n\nSTYLE CONTEXT:\n{1}\n\nDESCRIBE THIS IMAGE:\n1. Content - What is depicted: subjects, setting, actions, objects, spatial relationships\n2. Style - How it looks: colors, lighting, composition, textures, mood, artistic techniques\n\nWrite one cohesive caption that accurately describes both what is in the image and how it is rendered. Incorporate style elements from the context above where they apply. Be specific and precise - avoid vague terms like 'beautiful' or 'amazing'. The caption should help an AI learn to recreate this visual style."]
+            "widgets_values": ["You are captioning images for an AI training dataset.\n\nTRIGGER WORD: {1}\nThis trigger word MUST appear at the start of every caption.\n\nSTYLE CONTEXT:\n{2}\n\nDESCRIBE THIS IMAGE:\n1. Content - What is depicted: subjects, setting, actions, objects, spatial relationships\n2. Style - How it looks: colors, lighting, composition, textures, mood, artistic techniques\n\nWrite the caption starting with the trigger word, then describe both what is in the image and how it is rendered. Incorporate style elements from the context above where they apply. Be specific and precise - avoid vague terms like 'beautiful' or 'amazing'."]
         },
         {
             "id": 4,
             "type": "Note",
-            "pos": [500, 550],
+            "pos": [500, 600],
             "size": [400, 150],
             "flags": {},
-            "order": 3,
+            "order": 4,
             "mode": 0,
             "properties": {},
             "widgets_values": ["CONNECT YOUR VISION MODEL HERE\n\nConnect LoadImagesFromFolder 'images' output and TextTemplate 'text' output to your LM Studio or other vision model node.\n\nThe vision model should output the caption text."],
@@ -72,10 +86,10 @@
         {
             "id": 5,
             "type": "Note",
-            "pos": [950, 550],
+            "pos": [950, 600],
             "size": [350, 150],
             "flags": {},
-            "order": 4,
+            "order": 5,
             "mode": 0,
             "properties": {},
             "widgets_values": ["Connect your vision model's text output here, replacing the ShowText connection.\n\nThe SaveTextToFile node will save each caption with the matching image filename."],
@@ -88,7 +102,7 @@
             "pos": [1150, 200],
             "size": [320, 120],
             "flags": {},
-            "order": 5,
+            "order": 6,
             "mode": 0,
             "inputs": [
                 {"name": "text", "type": "STRING", "link": 4},
@@ -106,7 +120,7 @@
             "pos": [950, 200],
             "size": [180, 120],
             "flags": {},
-            "order": 6,
+            "order": 7,
             "mode": 0,
             "inputs": [
                 {"name": "text", "type": "STRING", "link": 3}
@@ -123,38 +137,39 @@
             "pos": [100, 50],
             "size": [600, 100],
             "flags": {},
-            "order": 7,
+            "order": 8,
             "mode": 0,
             "properties": {},
-            "widgets_values": ["IMAGE CAPTIONING FOR STYLE DATASETS\n\nThis workflow loads images from a folder, generates captions using a vision model, and saves each caption with the matching image filename. Edit the style name in TextBox and the prompt template in TextTemplate."],
+            "widgets_values": ["IMAGE CAPTIONING FOR STYLE DATASETS\n\nThis workflow loads images from a folder, generates captions using a vision model, and saves each caption with the matching image filename. Set your trigger word and style description, then connect your vision model."],
             "color": "#233",
             "bgcolor": "#355"
         }
     ],
     "links": [
-        [1, 2, 0, 3, 0, "STRING"],
+        [1, 2, 0, 3, 1, "STRING"],
         [2, 1, 1, 6, 1, "STRING"],
         [3, 3, 0, 7, 0, "STRING"],
-        [4, 7, 0, 6, 0, "STRING"]
+        [4, 7, 0, 6, 0, "STRING"],
+        [5, 9, 0, 3, 0, "STRING"]
     ],
     "groups": [
         {
             "title": "Image Input & Style Context",
-            "bounding": [80, -60, 360, 780],
+            "bounding": [80, -60, 360, 860],
             "color": "#8A8",
             "font_size": 24,
             "flags": {}
         },
         {
             "title": "Prompt Template",
-            "bounding": [480, -60, 440, 780],
+            "bounding": [480, -60, 440, 860],
             "color": "#88A",
             "font_size": 24,
             "flags": {}
         },
         {
             "title": "Output",
-            "bounding": [930, -60, 560, 780],
+            "bounding": [930, -60, 560, 860],
             "color": "#A88",
             "font_size": 24,
             "flags": {}
