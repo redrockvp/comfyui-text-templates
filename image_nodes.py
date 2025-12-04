@@ -21,6 +21,7 @@ class LoadImagesFromFolder:
             "optional": {
                 "extension_filter": ("STRING", {"default": "", "multiline": False}),
                 "limit": ("INT", {"default": 0, "min": 0, "max": 10000}),
+                "include_extension": ("BOOLEAN", {"default": False}),
             },
         }
 
@@ -30,7 +31,7 @@ class LoadImagesFromFolder:
     FUNCTION = "load_images"
     CATEGORY = "image"
 
-    def load_images(self, folder_path, extension_filter="", limit=0):
+    def load_images(self, folder_path, extension_filter="", limit=0, include_extension=False):
         if not folder_path or not os.path.isdir(folder_path):
             raise ValueError(f"Invalid folder path: {folder_path}")
 
@@ -75,8 +76,11 @@ class LoadImagesFromFolder:
             img_tensor = torch.from_numpy(img_array).unsqueeze(0)
             images.append(img_tensor)
 
-            # Filename without extension
-            filenames.append(os.path.splitext(filename)[0])
+            # Filename with or without extension based on setting
+            if include_extension:
+                filenames.append(filename)
+            else:
+                filenames.append(os.path.splitext(filename)[0])
 
         return (images, filenames, len(filenames))
 
