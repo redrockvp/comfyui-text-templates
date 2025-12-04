@@ -129,3 +129,77 @@ class SaveTextToFile:
             filepaths.append(filepath)
 
         return (filepaths,)
+
+
+class SaveImagesToFolder:
+    """
+    Save images to a folder with specified filenames. Supports batch processing.
+    Useful for creating updated datasets via I2I workflows.
+    """
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "images": ("IMAGE",),
+                "output_folder": ("STRING", {"default": "", "multiline": False}),
+                "filename": ("STRING", {"forceInput": True}),
+            },
+            "optional": {
+                "format": (["png", "jpg", "webp"], {"default": "png"}),
+                "quality": ("INT", {"default": 95, "min": 1, "max": 100}),
+            },
+        }
+
+    INPUT_IS_LIST = True
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("filepaths",)
+    OUTPUT_IS_LIST = (True,)
+    FUNCTION = "save_images"
+    CATEGORY = "image"
+    OUTPUT_NODE = True
+
+    def save_images(self, images, output_folder, filename, format=None, quality=None):
+        # Handle format default and list format
+        if format is None or len(format) == 0:
+            format = ["png"]
+        fmt = format[0] if isinstance(format, list) else format
+
+        # Handle quality
+        if quality is None or len(quality) == 0:
+            quality = [95]
+        qual = quality[0] if isinstance(quality, list) else quality
+
+        # Get output folder (take first if list)
+        out_folder = output_folder[0] if isinstance(output_folder, list) else output_folder
+        if not out_folder:
+            raise ValueError("Output folder path is required")
+
+        # Create output folder if it doesn't exist
+        os.makedirs(out_folder, exist_ok=True)
+
+        # Map format to extension and save options
+        format_map = {
+            "png": (".png", {}),
+            "jpg": (".jpg", {"quality": qual}),
+            "webp": (".webp", {"quality": qual}),
+        }
+        ext, save_opts = format_map.get(fmt, (".png", {}))
+
+        # Process each image/filename pair
+        filepaths = []
+        for i, (img_tensor, fname) in enumerate(zip(images, filename)):
+            # Handle batch dimension - take first image if batched
+            if len(img_tensor.shape) == 4:
+                img_tensor = img_tensor[0]
+
+            # Convert tensor to PIL Image (HWC format, 0-1 range)
+            img_array = (img_tensor.cpu().numpy() * 255).astype(np.uint8)
+            img = Image.fromarray(img_array)
+
+            # Save image
+            filepath = os.path.join(out_folder, f"{fname}{ext}")
+            img.save(filepath, **save_opts)
+            filepaths.append(filepath)
+
+        return (filepaths,)

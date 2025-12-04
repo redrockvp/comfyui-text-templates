@@ -1,6 +1,6 @@
 from .text_template import TextTemplate
 from .text_nodes import TextBox, ShowText
-from .image_nodes import LoadImagesFromFolder, SaveTextToFile
+from .image_nodes import LoadImagesFromFolder, SaveTextToFile, SaveImagesToFolder
 
 NODE_CLASS_MAPPINGS = {
     "TextTemplate": TextTemplate,
@@ -8,6 +8,7 @@ NODE_CLASS_MAPPINGS = {
     "ShowText": ShowText,
     "LoadImagesFromFolder": LoadImagesFromFolder,
     "SaveTextToFile": SaveTextToFile,
+    "SaveImagesToFolder": SaveImagesToFolder,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -16,6 +17,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ShowText": "Show Text",
     "LoadImagesFromFolder": "Load Images From Folder",
     "SaveTextToFile": "Save Text To File",
+    "SaveImagesToFolder": "Save Images To Folder",
 }
 
 WEB_DIRECTORY = "./js"
