@@ -434,7 +434,7 @@
                 {
                     "name": "text",
                     "type": "STRING",
-                    "links": [14]
+                    "links": []
                 }
             ],
             "title": "FINAL POSITIVE PROMPT",
@@ -458,7 +458,7 @@
                 {
                     "name": "text",
                     "type": "STRING",
-                    "links": [15]
+                    "links": []
                 }
             ],
             "title": "Base Negative Prompt",
@@ -496,9 +496,7 @@
         [10, 11, 0, 12, 1, "STRING"],
         [11, 12, 0, 14, 0, "STRING"],
         [12, 13, 0, 14, 1, "STRING"],
-        [13, 14, 0, 15, 0, "STRING"],
-        [14, 15, 0, null, null, "STRING"],
-        [15, 16, 0, null, null, "STRING"]
+        [13, 14, 0, 15, 0, "STRING"]
     ],
     "groups": [
         {
