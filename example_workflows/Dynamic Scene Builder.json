@@ -15,7 +15,7 @@
             "inputs": [],
             "outputs": [],
             "properties": {},
-            "widgets_values": ["Z-IMAGE TURBO PROMPT BUILDER\n\nThis workflow chains LLM outputs to build detailed prompts optimized for Z-Image Turbo:\n1. Stage 1: Expand character concept into detailed description\n2. Stage 2: Compose character + setting into rich scene\n3. Stage 3: Generate final long-form prose prompt\n\nZ-Image works best with 600-1000 word detailed prose, NOT keyword lists.\nIt does NOT use negative prompts (no classifier-free guidance)."],
+            "widgets_values": ["Z-IMAGE TURBO PROMPT BUILDER\n\nChains LLM outputs to build prompts for Z-Image Turbo:\n1. Stage 1: Expand character concept (2-3 sentences)\n2. Stage 2: Compose scene with lighting/atmosphere (3-4 sentences)\n3. Stage 3: Generate final prose prompt (100-200 words)\n\nZ-Image prefers flowing prose over comma-separated keywords.\nIt does NOT use negative prompts."],
             "color": "#432",
             "bgcolor": "#653"
         },
@@ -61,7 +61,7 @@
             "properties": {
                 "Node name for S&R": "TextBox"
             },
-            "widgets_values": ["You are a character description writer for Z-Image Turbo. This model requires long, detailed prose descriptions. Given a character concept, write a rich 3-4 paragraph description including: exact age and ethnicity, detailed physical features (hair color/style, eye color, skin tone, build), specific clothing with textures and colors, pose and body language, facial expression and mood. Use concrete, vivid language. Output only the description."]
+            "widgets_values": ["Expand this character concept into a visual description for image generation. Include: appearance, clothing, and pose. Keep it to 2-3 sentences of concrete details. Output only the description."]
         },
         {
             "id": 4,
@@ -95,7 +95,7 @@
                 "cnr_id": "comfyui-lmstudio-image-to-text-node",
                 "Node name for S&R": "Expo Lmstudio Text Generation"
             },
-            "widgets_values": ["", "", "qwen/qwen3-vl-4b", "True", 0, 42, "fixed", 800, 0.8, false, 300, "", "", 0]
+            "widgets_values": ["", "", "qwen/qwen3-vl-4b", "True", 0, 42, "fixed", 200, 0.8, false, 300, "", "", 0]
         },
         {
             "id": 5,
@@ -232,7 +232,7 @@
                 "cnr_id": "comfyui-lmstudio-image-to-text-node",
                 "Node name for S&R": "Expo Lmstudio Text Generation"
             },
-            "widgets_values": ["", "", "qwen/qwen3-vl-4b", "True", 0, 42, "fixed", 1000, 0.8, false, 300, "", "", 0]
+            "widgets_values": ["", "", "qwen/qwen3-vl-4b", "True", 0, 42, "fixed", 300, 0.8, false, 300, "", "", 0]
         },
         {
             "id": 9,
@@ -254,7 +254,7 @@
             "properties": {
                 "Node name for S&R": "TextBox"
             },
-            "widgets_values": ["You are a scene composer for Z-Image Turbo, which requires long detailed prose. Given a character description and setting, write 2-3 rich paragraphs describing: the character's exact position and action in the scene, environmental details (time of day, weather, atmospheric conditions), lighting quality and direction (volumetric, dramatic, soft, harsh), background elements and depth, the overall mood and emotional tone. Be extremely specific - Z-Image is unopinionated and needs explicit details. Output only the scene description."]
+            "widgets_values": ["Combine the character and setting into a scene description. Add: what they're doing, the lighting, and atmosphere. Keep it to 3-4 sentences. Output only the scene."]
         },
         {
             "id": 10,
@@ -379,7 +379,7 @@
             "properties": {
                 "Node name for S&R": "TextBox"
             },
-            "widgets_values": ["You are a prompt engineer for Z-Image Turbo. This model works best with long, detailed prose (600-1000 words). DO NOT use comma-separated keyword lists. Instead, write flowing descriptive paragraphs that weave together: the complete character description, their action and pose, the environment and setting, lighting and atmosphere, and the artistic style. Be extremely specific about every visual element. Z-Image has no opinions - if you don't specify it, it won't appear. Output only the final prompt as continuous prose."]
+            "widgets_values": ["Convert this scene and style into a Z-Image prompt. Write it as flowing prose (not comma lists). Be specific but concise - aim for 100-200 words total. Focus on the most important visual elements. Output only the prompt."]
         },
         {
             "id": 14,
@@ -413,7 +413,7 @@
                 "cnr_id": "comfyui-lmstudio-image-to-text-node",
                 "Node name for S&R": "Expo Lmstudio Text Generation"
             },
-            "widgets_values": ["", "", "qwen/qwen3-vl-4b", "True", 0, 42, "fixed", 1500, 0.7, false, 300, "", "", 0]
+            "widgets_values": ["", "", "qwen/qwen3-vl-4b", "True", 0, 42, "fixed", 400, 0.7, false, 300, "", "", 0]
         },
         {
             "id": 15,
@@ -478,7 +478,7 @@
             "inputs": [],
             "outputs": [],
             "properties": {},
-            "widgets_values": ["OUTPUT\n\nConnect FINAL POSITIVE PROMPT → CLIP Encode\n\nZ-Image Turbo does NOT use negative prompts.\nThe model uses a distilled architecture without\nclassifier-free guidance.\n\nFor best results, ensure your prompt is detailed\nprose (600-1000 words) covering all visual elements."],
+            "widgets_values": ["OUTPUT\n\nConnect FINAL POSITIVE PROMPT → CLIP Encode\n\nZ-Image Turbo does NOT use negative prompts.\n\nTip: If results are off, try adjusting the\ncharacter concept or setting inputs."],
             "color": "#233",
             "bgcolor": "#355"
         }
