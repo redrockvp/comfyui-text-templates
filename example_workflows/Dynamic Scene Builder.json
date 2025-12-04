@@ -1,0 +1,533 @@
+{
+    "id": "chained-context-builder-v1",
+    "revision": 0,
+    "last_node_id": 25,
+    "last_link_id": 35,
+    "nodes": [
+        {
+            "id": 1,
+            "type": "Note",
+            "pos": [-900, -150],
+            "size": [800, 120],
+            "flags": {},
+            "order": 0,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [],
+            "properties": {},
+            "widgets_values": ["CHAINED CONTEXT BUILDER\n\nThis workflow demonstrates chaining LLM outputs through Text Templates to build evolving context:\n1. Stage 1: Generate a character description from a simple concept\n2. Stage 2: Use that character + setting to generate a scene\n3. Stage 3: Use the full scene context to generate the final detailed prompt\n\nEach stage builds on the previous, creating rich layered context for image generation."],
+            "color": "#432",
+            "bgcolor": "#653"
+        },
+        {
+            "id": 2,
+            "type": "TextBox",
+            "pos": [-900, 50],
+            "size": [300, 120],
+            "flags": {},
+            "order": 1,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "text",
+                    "type": "STRING",
+                    "links": [1]
+                }
+            ],
+            "title": "Character Concept",
+            "properties": {
+                "Node name for S&R": "TextBox"
+            },
+            "widgets_values": ["elven ranger"]
+        },
+        {
+            "id": 3,
+            "type": "TextBox",
+            "pos": [-900, 220],
+            "size": [300, 200],
+            "flags": {},
+            "order": 2,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "text",
+                    "type": "STRING",
+                    "links": [2]
+                }
+            ],
+            "title": "Character Gen System Prompt",
+            "properties": {
+                "Node name for S&R": "TextBox"
+            },
+            "widgets_values": ["Describe this character for image generation. Include: appearance, clothing, pose, expression. Be vivid but concise (2-3 sentences). Output only the description."]
+        },
+        {
+            "id": 4,
+            "type": "Expo Lmstudio Text Generation",
+            "pos": [-550, 50],
+            "size": [280, 370],
+            "flags": {},
+            "order": 3,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "prompt",
+                    "type": "STRING",
+                    "link": 1
+                },
+                {
+                    "name": "system_prompt",
+                    "type": "STRING",
+                    "link": 2
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "Generated Text",
+                    "type": "STRING",
+                    "links": [3]
+                }
+            ],
+            "title": "Stage 1: Character Generator",
+            "properties": {
+                "cnr_id": "comfyui-lmstudio-image-to-text-node",
+                "Node name for S&R": "Expo Lmstudio Text Generation"
+            },
+            "widgets_values": ["", "", "qwen/qwen3-vl-4b", "True", 0, 42, "fixed", 300, 0.8, false, 300, "", "", 0]
+        },
+        {
+            "id": 5,
+            "type": "ShowText",
+            "pos": [-220, 50],
+            "size": [350, 150],
+            "flags": {},
+            "order": 4,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "text",
+                    "type": "STRING",
+                    "link": 3
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "text",
+                    "type": "STRING",
+                    "links": [4]
+                }
+            ],
+            "title": "Generated Character",
+            "properties": {
+                "Node name for S&R": "ShowText"
+            },
+            "widgets_values": []
+        },
+        {
+            "id": 6,
+            "type": "TextBox",
+            "pos": [-220, 250],
+            "size": [350, 120],
+            "flags": {},
+            "order": 5,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "text",
+                    "type": "STRING",
+                    "links": [5]
+                }
+            ],
+            "title": "Setting",
+            "properties": {
+                "Node name for S&R": "TextBox"
+            },
+            "widgets_values": ["misty ancient forest at dawn"]
+        },
+        {
+            "id": 7,
+            "type": "TextTemplate",
+            "pos": [180, 50],
+            "size": [380, 250],
+            "flags": {},
+            "order": 6,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "text_1",
+                    "type": "STRING",
+                    "link": 4
+                },
+                {
+                    "name": "text_2",
+                    "type": "STRING",
+                    "link": 5
+                },
+                {
+                    "name": "text_3",
+                    "type": "STRING",
+                    "link": null
+                },
+                {
+                    "name": "text_4",
+                    "type": "STRING",
+                    "link": null
+                },
+                {
+                    "name": "text_5",
+                    "type": "STRING",
+                    "link": null
+                },
+                {
+                    "name": "text_6",
+                    "type": "STRING",
+                    "link": null
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "text",
+                    "type": "STRING",
+                    "links": [6]
+                }
+            ],
+            "title": "Character + Setting Template",
+            "properties": {
+                "Node name for S&R": "TextTemplate"
+            },
+            "widgets_values": ["Character: {1}\n\nSetting: {2}\n\nDescribe this character in this setting. What are they doing? What's the mood and atmosphere?"]
+        },
+        {
+            "id": 8,
+            "type": "Expo Lmstudio Text Generation",
+            "pos": [610, 50],
+            "size": [280, 370],
+            "flags": {},
+            "order": 7,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "prompt",
+                    "type": "STRING",
+                    "link": 6
+                },
+                {
+                    "name": "system_prompt",
+                    "type": "STRING",
+                    "link": 7
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "Generated Text",
+                    "type": "STRING",
+                    "links": [8]
+                }
+            ],
+            "title": "Stage 2: Scene Generator",
+            "properties": {
+                "cnr_id": "comfyui-lmstudio-image-to-text-node",
+                "Node name for S&R": "Expo Lmstudio Text Generation"
+            },
+            "widgets_values": ["", "", "qwen/qwen3-vl-4b", "True", 0, 42, "fixed", 400, 0.8, false, 300, "", "", 0]
+        },
+        {
+            "id": 9,
+            "type": "TextBox",
+            "pos": [180, 350],
+            "size": [380, 150],
+            "flags": {},
+            "order": 8,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "text",
+                    "type": "STRING",
+                    "links": [7]
+                }
+            ],
+            "title": "Scene Gen System Prompt",
+            "properties": {
+                "Node name for S&R": "TextBox"
+            },
+            "widgets_values": ["You are a scene composer. Given a character and setting, describe the complete scene with action, mood, and atmosphere. Be vivid and cinematic. Output only the scene description (3-4 sentences)."]
+        },
+        {
+            "id": 10,
+            "type": "ShowText",
+            "pos": [940, 50],
+            "size": [350, 180],
+            "flags": {},
+            "order": 9,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "text",
+                    "type": "STRING",
+                    "link": 8
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "text",
+                    "type": "STRING",
+                    "links": [9]
+                }
+            ],
+            "title": "Generated Scene",
+            "properties": {
+                "Node name for S&R": "ShowText"
+            },
+            "widgets_values": []
+        },
+        {
+            "id": 11,
+            "type": "TextBox",
+            "pos": [940, 280],
+            "size": [350, 120],
+            "flags": {},
+            "order": 10,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "text",
+                    "type": "STRING",
+                    "links": [10]
+                }
+            ],
+            "title": "Art Style",
+            "properties": {
+                "Node name for S&R": "TextBox"
+            },
+            "widgets_values": ["digital painting, fantasy art, dramatic lighting, by Greg Rutkowski and Alphonse Mucha"]
+        },
+        {
+            "id": 12,
+            "type": "TextTemplate",
+            "pos": [1340, 50],
+            "size": [380, 250],
+            "flags": {},
+            "order": 11,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "text_1",
+                    "type": "STRING",
+                    "link": 9
+                },
+                {
+                    "name": "text_2",
+                    "type": "STRING",
+                    "link": 10
+                },
+                {
+                    "name": "text_3",
+                    "type": "STRING",
+                    "link": null
+                },
+                {
+                    "name": "text_4",
+                    "type": "STRING",
+                    "link": null
+                },
+                {
+                    "name": "text_5",
+                    "type": "STRING",
+                    "link": null
+                },
+                {
+                    "name": "text_6",
+                    "type": "STRING",
+                    "link": null
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "text",
+                    "type": "STRING",
+                    "links": [11]
+                }
+            ],
+            "title": "Scene + Style Template",
+            "properties": {
+                "Node name for S&R": "TextTemplate"
+            },
+            "widgets_values": ["Scene: {1}\n\nStyle: {2}\n\nConvert this into a detailed image generation prompt. Include composition, lighting, color palette, and technical quality terms."]
+        },
+        {
+            "id": 13,
+            "type": "TextBox",
+            "pos": [1340, 350],
+            "size": [380, 150],
+            "flags": {},
+            "order": 12,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "text",
+                    "type": "STRING",
+                    "links": [12]
+                }
+            ],
+            "title": "Final Prompt System",
+            "properties": {
+                "Node name for S&R": "TextBox"
+            },
+            "widgets_values": ["You are an expert prompt engineer for diffusion image generation. Convert the scene and style into an optimized prompt. Include quality boosters (detailed, sharp focus, 8k). Output only the final prompt as a comma-separated list."]
+        },
+        {
+            "id": 14,
+            "type": "Expo Lmstudio Text Generation",
+            "pos": [1770, 50],
+            "size": [280, 370],
+            "flags": {},
+            "order": 13,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "prompt",
+                    "type": "STRING",
+                    "link": 11
+                },
+                {
+                    "name": "system_prompt",
+                    "type": "STRING",
+                    "link": 12
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "Generated Text",
+                    "type": "STRING",
+                    "links": [13]
+                }
+            ],
+            "title": "Stage 3: Final Prompt Generator",
+            "properties": {
+                "cnr_id": "comfyui-lmstudio-image-to-text-node",
+                "Node name for S&R": "Expo Lmstudio Text Generation"
+            },
+            "widgets_values": ["", "", "qwen/qwen3-vl-4b", "True", 0, 42, "fixed", 500, 0.7, false, 300, "", "", 0]
+        },
+        {
+            "id": 15,
+            "type": "ShowText",
+            "pos": [2100, 50],
+            "size": [400, 200],
+            "flags": {},
+            "order": 14,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "text",
+                    "type": "STRING",
+                    "link": 13
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "text",
+                    "type": "STRING",
+                    "links": [14]
+                }
+            ],
+            "title": "FINAL POSITIVE PROMPT",
+            "properties": {
+                "Node name for S&R": "ShowText"
+            },
+            "widgets_values": [],
+            "color": "#232",
+            "bgcolor": "#353"
+        },
+        {
+            "id": 16,
+            "type": "TextBox",
+            "pos": [2100, 300],
+            "size": [400, 120],
+            "flags": {},
+            "order": 15,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "text",
+                    "type": "STRING",
+                    "links": [15]
+                }
+            ],
+            "title": "Base Negative Prompt",
+            "properties": {
+                "Node name for S&R": "TextBox"
+            },
+            "widgets_values": ["blurry, low quality, artifacts, deformed, ugly, bad anatomy, extra limbs, watermark, signature, text"]
+        },
+        {
+            "id": 17,
+            "type": "Note",
+            "pos": [2550, 50],
+            "size": [300, 200],
+            "flags": {},
+            "order": 16,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [],
+            "properties": {},
+            "widgets_values": ["OUTPUTS\n\nConnect these to your image generation pipeline:\n\n• FINAL POSITIVE PROMPT → CLIP Encode (Positive)\n\n• Base Negative Prompt → CLIP Encode (Negative)\n\nThe positive prompt has been built through 3 stages of LLM context chaining."],
+            "color": "#233",
+            "bgcolor": "#355"
+        }
+    ],
+    "links": [
+        [1, 2, 0, 4, 0, "STRING"],
+        [2, 3, 0, 4, 1, "STRING"],
+        [3, 4, 0, 5, 0, "STRING"],
+        [4, 5, 0, 7, 0, "STRING"],
+        [5, 6, 0, 7, 1, "STRING"],
+        [6, 7, 0, 8, 0, "STRING"],
+        [7, 9, 0, 8, 1, "STRING"],
+        [8, 8, 0, 10, 0, "STRING"],
+        [9, 10, 0, 12, 0, "STRING"],
+        [10, 11, 0, 12, 1, "STRING"],
+        [11, 12, 0, 14, 0, "STRING"],
+        [12, 13, 0, 14, 1, "STRING"],
+        [13, 14, 0, 15, 0, "STRING"],
+        [14, 15, 0, null, null, "STRING"],
+        [15, 16, 0, null, null, "STRING"]
+    ],
+    "groups": [
+        {
+            "title": "Stage 1: Character Generation",
+            "bounding": [-950, 0, 780, 480],
+            "color": "#8A8"
+        },
+        {
+            "title": "Stage 2: Scene Composition",
+            "bounding": [130, 0, 760, 560],
+            "color": "#A88"
+        },
+        {
+            "title": "Stage 3: Final Prompt",
+            "bounding": [1290, 0, 760, 560],
+            "color": "#88A"
+        },
+        {
+            "title": "Output",
+            "bounding": [2050, 0, 500, 480],
+            "color": "#AA8"
+        }
+    ],
+    "config": {},
+    "extra": {
+        "ds": {
+            "scale": 0.5,
+            "offset": [1000, 300]
+        }
+    },
+    "version": 0.4
+}
