@@ -8,4 +8,4 @@ requires-python = ">=3.9"
 dependencies = []
 
 [project.urls]
-Repository = "https://github.com/YOUR_USERNAME/comfyui-text-templates"
+Repository = "https://github.com/redrockvp/comfyui-text-templates"

@@ -10,7 +10,7 @@ Search for "Text Templates" in ComfyUI Manager and click Install.
 ### Manual
 ```bash
 cd ComfyUI/custom_nodes
-git clone https://github.com/YOUR_USERNAME/comfyui-text-templates.git
+git clone https://github.com/redrockvp/comfyui-text-templates.git
 ```
 Restart ComfyUI.
 
