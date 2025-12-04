@@ -1,0 +1,171 @@
+{
+    "id": "8f4e2a1b-3c5d-4e6f-8a9b-1c2d3e4f5a6b",
+    "revision": 0,
+    "last_node_id": 8,
+    "last_link_id": 6,
+    "nodes": [
+        {
+            "id": 1,
+            "type": "LoadImagesFromFolder",
+            "pos": [100, 200],
+            "size": [320, 100],
+            "flags": {},
+            "order": 0,
+            "mode": 0,
+            "outputs": [
+                {"name": "images", "type": "IMAGE", "links": [], "slot_index": 0},
+                {"name": "filenames", "type": "STRING", "links": [2], "slot_index": 1},
+                {"name": "count", "type": "INT", "links": [], "slot_index": 2}
+            ],
+            "properties": {"Node name for S&R": "LoadImagesFromFolder"},
+            "widgets_values": ["C:/path/to/your/images", ""]
+        },
+        {
+            "id": 2,
+            "type": "TextBox",
+            "pos": [100, 400],
+            "size": [320, 200],
+            "flags": {},
+            "order": 1,
+            "mode": 0,
+            "outputs": [
+                {"name": "text", "type": "STRING", "links": [1], "slot_index": 0}
+            ],
+            "properties": {"Node name for S&R": "TextBox"},
+            "widgets_values": ["your_style_name"]
+        },
+        {
+            "id": 3,
+            "type": "TextTemplate",
+            "pos": [500, 200],
+            "size": [400, 300],
+            "flags": {},
+            "order": 2,
+            "mode": 0,
+            "inputs": [
+                {"name": "text_1", "type": "STRING", "link": 1},
+                {"name": "text_2", "type": "STRING", "link": null},
+                {"name": "text_3", "type": "STRING", "link": null},
+                {"name": "text_4", "type": "STRING", "link": null},
+                {"name": "text_5", "type": "STRING", "link": null},
+                {"name": "text_6", "type": "STRING", "link": null}
+            ],
+            "outputs": [
+                {"name": "text", "type": "STRING", "links": [3], "slot_index": 0}
+            ],
+            "properties": {"Node name for S&R": "TextTemplate"},
+            "widgets_values": ["Describe this image for training a \"{1}\" style model.\n\nContent: Describe the subject, setting, actions, and key elements visible in the image.\n\nStyle: Describe the colors, lighting, composition, textures, and artistic approach that define this visual style.\n\nWrite as one cohesive, detailed caption that naturally blends what is depicted with how it is rendered. Be specific and precise - avoid vague terms. This caption will be used for AI image generation training."]
+        },
+        {
+            "id": 4,
+            "type": "Note",
+            "pos": [500, 550],
+            "size": [400, 150],
+            "flags": {},
+            "order": 3,
+            "mode": 0,
+            "properties": {},
+            "widgets_values": ["CONNECT YOUR VISION MODEL HERE\n\nConnect LoadImagesFromFolder 'images' output and TextTemplate 'text' output to your LM Studio or other vision model node.\n\nThe vision model should output the caption text."],
+            "color": "#432",
+            "bgcolor": "#653"
+        },
+        {
+            "id": 5,
+            "type": "Note",
+            "pos": [950, 550],
+            "size": [350, 150],
+            "flags": {},
+            "order": 4,
+            "mode": 0,
+            "properties": {},
+            "widgets_values": ["Connect your vision model's text output here, replacing the ShowText connection.\n\nThe SaveTextToFile node will save each caption with the matching image filename."],
+            "color": "#432",
+            "bgcolor": "#653"
+        },
+        {
+            "id": 6,
+            "type": "SaveTextToFile",
+            "pos": [1150, 200],
+            "size": [320, 120],
+            "flags": {},
+            "order": 5,
+            "mode": 0,
+            "inputs": [
+                {"name": "text", "type": "STRING", "link": 4},
+                {"name": "filename", "type": "STRING", "link": 2}
+            ],
+            "outputs": [
+                {"name": "filepaths", "type": "STRING", "links": [], "slot_index": 0}
+            ],
+            "properties": {"Node name for S&R": "SaveTextToFile"},
+            "widgets_values": ["C:/path/to/output/captions", ".txt"]
+        },
+        {
+            "id": 7,
+            "type": "ShowText",
+            "pos": [950, 200],
+            "size": [180, 120],
+            "flags": {},
+            "order": 6,
+            "mode": 0,
+            "inputs": [
+                {"name": "text", "type": "STRING", "link": 3}
+            ],
+            "outputs": [
+                {"name": "text", "type": "STRING", "links": [4], "slot_index": 0}
+            ],
+            "properties": {"Node name for S&R": "ShowText"},
+            "widgets_values": [""]
+        },
+        {
+            "id": 8,
+            "type": "Note",
+            "pos": [100, 50],
+            "size": [600, 100],
+            "flags": {},
+            "order": 7,
+            "mode": 0,
+            "properties": {},
+            "widgets_values": ["IMAGE CAPTIONING FOR STYLE DATASETS\n\nThis workflow loads images from a folder, generates captions using a vision model, and saves each caption with the matching image filename. Edit the style name in TextBox and the prompt template in TextTemplate."],
+            "color": "#233",
+            "bgcolor": "#355"
+        }
+    ],
+    "links": [
+        [1, 2, 0, 3, 0, "STRING"],
+        [2, 1, 1, 6, 1, "STRING"],
+        [3, 3, 0, 7, 0, "STRING"],
+        [4, 7, 0, 6, 0, "STRING"]
+    ],
+    "groups": [
+        {
+            "title": "Image Input",
+            "bounding": [80, -60, 360, 700],
+            "color": "#8A8",
+            "font_size": 24,
+            "flags": {}
+        },
+        {
+            "title": "Prompt Template",
+            "bounding": [480, -60, 440, 780],
+            "color": "#88A",
+            "font_size": 24,
+            "flags": {}
+        },
+        {
+            "title": "Output",
+            "bounding": [930, -60, 560, 780],
+            "color": "#A88",
+            "font_size": 24,
+            "flags": {}
+        }
+    ],
+    "config": {},
+    "extra": {
+        "ds": {
+            "scale": 1,
+            "offset": [0, 0]
+        }
+    },
+    "version": 0.4
+}
