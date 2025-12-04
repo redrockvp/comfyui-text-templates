@@ -5,14 +5,11 @@ import torch
 
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif', '.tiff', '.tif'}
 
-# Global state to track current index per folder
-_folder_indices = {}
-
 
 class LoadImagesFromFolder:
     """
-    Load images from a folder one at a time, outputting the image and its filename.
-    Each queue run advances to the next image in the folder.
+    Load ALL images from a folder as a batch, with corresponding filenames.
+    Images are resized to match the first image's dimensions for batching.
     """
 
     @classmethod
@@ -20,24 +17,21 @@ class LoadImagesFromFolder:
         return {
             "required": {
                 "folder_path": ("STRING", {"default": "", "multiline": False}),
-                "index": ("INT", {"default": 0, "min": 0, "max": 99999}),
             },
             "optional": {
                 "extension_filter": ("STRING", {"default": "", "multiline": False}),
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING", "STRING", "INT")
-    RETURN_NAMES = ("image", "filename", "filename_with_ext", "total_images")
-    FUNCTION = "load_image"
+    RETURN_TYPES = ("IMAGE", "STRING", "INT")
+    RETURN_NAMES = ("images", "filenames", "count")
+    OUTPUT_IS_LIST = (False, True, False)
+    FUNCTION = "load_images"
     CATEGORY = "image"
 
-    def load_image(self, folder_path, index, extension_filter=""):
+    def load_images(self, folder_path, extension_filter=""):
         if not folder_path or not os.path.isdir(folder_path):
             raise ValueError(f"Invalid folder path: {folder_path}")
-
-        # Get list of image files
-        image_files = []
 
         # Parse extension filter
         if extension_filter.strip():
@@ -45,6 +39,8 @@ class LoadImagesFromFolder:
         else:
             allowed_exts = IMAGE_EXTENSIONS
 
+        # Get list of image files
+        image_files = []
         for filename in sorted(os.listdir(folder_path)):
             ext = os.path.splitext(filename)[1].lower()
             if ext in allowed_exts:
@@ -53,32 +49,37 @@ class LoadImagesFromFolder:
         if not image_files:
             raise ValueError(f"No image files found in: {folder_path}")
 
-        total_images = len(image_files)
+        # Load all images
+        images = []
+        filenames = []
+        target_size = None
 
-        # Clamp index to valid range
-        current_index = index % total_images
+        for filename in image_files:
+            filepath = os.path.join(folder_path, filename)
+            img = Image.open(filepath)
+            img = img.convert("RGB")
 
-        # Get the current image
-        current_filename = image_files[current_index]
-        filepath = os.path.join(folder_path, current_filename)
+            # Use first image's size as target, resize others to match
+            if target_size is None:
+                target_size = img.size
+            elif img.size != target_size:
+                img = img.resize(target_size, Image.Resampling.LANCZOS)
 
-        # Load image
-        img = Image.open(filepath)
-        img = img.convert("RGB")
+            img_array = np.array(img).astype(np.float32) / 255.0
+            images.append(img_array)
 
-        # Convert to tensor (ComfyUI format: BHWC, float32, 0-1 range)
-        img_array = np.array(img).astype(np.float32) / 255.0
-        img_tensor = torch.from_numpy(img_array).unsqueeze(0)  # Add batch dimension
+            # Filename without extension
+            filenames.append(os.path.splitext(filename)[0])
 
-        # Get filename without extension
-        filename_no_ext = os.path.splitext(current_filename)[0]
+        # Stack into batch tensor (BHWC format)
+        batch_tensor = torch.from_numpy(np.stack(images, axis=0))
 
-        return (img_tensor, filename_no_ext, current_filename, total_images)
+        return (batch_tensor, filenames, len(filenames))
 
 
 class SaveTextToFile:
     """
-    Save text content to a file. Useful for saving captions or other text outputs.
+    Save text content to a file. Supports batch processing with lists.
     """
 
     @classmethod
@@ -94,28 +95,38 @@ class SaveTextToFile:
             },
         }
 
+    INPUT_IS_LIST = True
     RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("filepath",)
+    RETURN_NAMES = ("filepaths",)
+    OUTPUT_IS_LIST = (True,)
     FUNCTION = "save_text"
     CATEGORY = "text"
     OUTPUT_NODE = True
 
-    def save_text(self, text, output_folder, filename, extension=".txt"):
-        if not output_folder:
+    def save_text(self, text, output_folder, filename, extension=None):
+        # Handle extension default and list format
+        if extension is None or len(extension) == 0:
+            extension = [".txt"]
+
+        # Get the actual extension value (take first if list)
+        ext = extension[0] if isinstance(extension, list) else extension
+        if ext and not ext.startswith('.'):
+            ext = '.' + ext
+
+        # Get output folder (take first if list)
+        out_folder = output_folder[0] if isinstance(output_folder, list) else output_folder
+        if not out_folder:
             raise ValueError("Output folder path is required")
 
-        # Ensure extension starts with a dot
-        if extension and not extension.startswith('.'):
-            extension = '.' + extension
-
         # Create output folder if it doesn't exist
-        os.makedirs(output_folder, exist_ok=True)
+        os.makedirs(out_folder, exist_ok=True)
 
-        # Build full filepath
-        filepath = os.path.join(output_folder, f"{filename}{extension}")
+        # Process each text/filename pair
+        filepaths = []
+        for i, (txt, fname) in enumerate(zip(text, filename)):
+            filepath = os.path.join(out_folder, f"{fname}{ext}")
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(txt)
+            filepaths.append(filepath)
 
-        # Write text to file
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(text)
-
-        return (filepath,)
+        return (filepaths,)
