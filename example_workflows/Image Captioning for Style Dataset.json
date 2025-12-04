@@ -24,7 +24,7 @@
             "id": 2,
             "type": "TextBox",
             "pos": [100, 400],
-            "size": [320, 200],
+            "size": [320, 280],
             "flags": {},
             "order": 1,
             "mode": 0,
@@ -32,7 +32,7 @@
                 {"name": "text", "type": "STRING", "links": [1], "slot_index": 0}
             ],
             "properties": {"Node name for S&R": "TextBox"},
-            "widgets_values": ["your_style_name"]
+            "widgets_values": ["Cinematic fantasy art with rich, saturated colors and dramatic lighting. Moody atmosphere with deep shadows and golden highlights. Painterly textures with soft edges. Epic scale and mythological themes. Inspired by concept art and digital matte painting."]
         },
         {
             "id": 3,
@@ -54,7 +54,7 @@
                 {"name": "text", "type": "STRING", "links": [3], "slot_index": 0}
             ],
             "properties": {"Node name for S&R": "TextTemplate"},
-            "widgets_values": ["Describe this image for training a \"{1}\" style model.\n\nContent: Describe the subject, setting, actions, and key elements visible in the image.\n\nStyle: Describe the colors, lighting, composition, textures, and artistic approach that define this visual style.\n\nWrite as one cohesive, detailed caption that naturally blends what is depicted with how it is rendered. Be specific and precise - avoid vague terms. This caption will be used for AI image generation training."]
+            "widgets_values": ["You are captioning images for an AI training dataset. The images share a consistent visual style described below.\n\nSTYLE CONTEXT:\n{1}\n\nDESCRIBE THIS IMAGE:\n1. Content - What is depicted: subjects, setting, actions, objects, spatial relationships\n2. Style - How it looks: colors, lighting, composition, textures, mood, artistic techniques\n\nWrite one cohesive caption that accurately describes both what is in the image and how it is rendered. Incorporate style elements from the context above where they apply. Be specific and precise - avoid vague terms like 'beautiful' or 'amazing'. The caption should help an AI learn to recreate this visual style."]
         },
         {
             "id": 4,
@@ -139,8 +139,8 @@
     ],
     "groups": [
         {
-            "title": "Image Input",
-            "bounding": [80, -60, 360, 700],
+            "title": "Image Input & Style Context",
+            "bounding": [80, -60, 360, 780],
             "color": "#8A8",
             "font_size": 24,
             "flags": {}
