@@ -245,7 +245,7 @@
                 "Node name for S&R": "TextTemplate"
             },
             "widgets_values": [
-                "You are captioning images for an AI training dataset.\n\nSTYLE CONTEXT:\n{1}\n\nTRIGGER WORD: {2}\nThis trigger word MUST appear at the start of every caption.\n\nDESCRIBE THIS IMAGE:\n1. Content - What is depicted: subjects, setting, actions, objects, spatial relationships\n2. Style - How it looks: colors, lighting, composition, textures, mood, artistic techniques\n\nWrite the caption starting with the trigger word, then describe both what is in the image and how it is rendered. Incorporate style elements from the context above where they apply. Be specific and precise - avoid vague terms like 'beautiful' or 'amazing'."
+                "You are captioning images for an AI training dataset.\n\nSTYLE CONTEXT:\n{1}\n\nTRIGGER WORD: {2}\nThis trigger word MUST appear at the start of every caption.\n\nDESCRIBE THIS IMAGE:\n1. Content - What is depicted: subjects, setting, actions, objects, spatial relationships\n2. Style - How it looks: colors, lighting, composition, textures, mood, artistic techniques\n\nRULES:\n• Start every caption with the trigger word\n• Be specific and precise - avoid vague terms like 'beautiful' or 'amazing'\n• NO ambiguity - never use 'or', 'possibly', 'might be', 'either...or', 'perhaps'\n• Make definitive statements about what you see\n• If uncertain, describe what is most likely rather than listing alternatives"
             ]
         },
         {
