@@ -622,7 +622,7 @@
                 "Node name for S&R": "TextBox"
             },
             "widgets_values": [
-                ""
+                "Describe this image in detail for AI training. Start with the trigger word, then describe the content and visual style."
             ]
         }
     ],
