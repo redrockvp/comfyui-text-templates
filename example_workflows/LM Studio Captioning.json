@@ -527,6 +527,7 @@
                     ]
                 }
             ],
+            "title": "Trigger Word",
             "properties": {
                 "aux_id": "redrockvp/comfyui-text-templates",
                 "ver": "e885069c658b21d9251d4515241afb89f71b2771",
@@ -572,6 +573,7 @@
                     ]
                 }
             ],
+            "title": "Style Context",
             "properties": {
                 "aux_id": "redrockvp/comfyui-text-templates",
                 "ver": "e885069c658b21d9251d4515241afb89f71b2771",
@@ -616,6 +618,7 @@
                     ]
                 }
             ],
+            "title": "User Prompt",
             "properties": {
                 "aux_id": "redrockvp/comfyui-text-templates",
                 "ver": "e885069c658b21d9251d4515241afb89f71b2771",
