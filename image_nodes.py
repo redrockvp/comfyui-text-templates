@@ -233,8 +233,10 @@ class ImageTextIterator:
             "required": {
                 "images": ("IMAGE",),
                 "filenames": ("STRING", {"forceInput": True}),
-                "current_index": ("INT", {"default": 0, "min": 0, "max": 10000}),
+            },
+            "optional": {
                 "current_text": ("STRING", {"multiline": True, "default": ""}),
+                "current_index": ("INT", {"default": 0, "min": 0, "max": 10000}),
                 "all_texts": ("STRING", {"multiline": True, "default": ""}),
                 "ready": ("BOOLEAN", {"default": False}),
             },
@@ -248,10 +250,19 @@ class ImageTextIterator:
     CATEGORY = "image"
     OUTPUT_NODE = True
 
-    def process(self, images, filenames, current_index, current_text, all_texts, ready):
+    def process(self, images, filenames, current_text=None, current_index=None, all_texts=None, ready=None):
         import json
 
-        # Extract scalar values from lists
+        # Handle None defaults and extract scalar values from lists
+        if current_index is None:
+            current_index = [0]
+        if current_text is None:
+            current_text = [""]
+        if all_texts is None:
+            all_texts = [""]
+        if ready is None:
+            ready = [False]
+
         idx = current_index[0] if isinstance(current_index, list) else current_index
         cur_txt = current_text[0] if isinstance(current_text, list) else current_text
         all_txt = all_texts[0] if isinstance(all_texts, list) else all_texts

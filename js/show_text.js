@@ -39,6 +39,11 @@ app.registerExtension({
 app.registerExtension({
     name: "comfyui-text-templates.ImageTextIterator",
     async setup() {
+        // Helper to get widget from node (visible or stored)
+        function getWidget(node, name) {
+            return node.widgets?.find(w => w.name === name) || node["_" + name + "Widget"];
+        }
+
         // Listen for image_text_iterator_update messages
         api.addEventListener("image_text_iterator_update", (event) => {
             const data = event.detail;
@@ -60,19 +65,19 @@ app.registerExtension({
                 }
 
                 // Update current_text widget with the text for this image
-                const currentTextWidget = node.widgets?.find(w => w.name === "current_text");
+                const currentTextWidget = getWidget(node, "current_text");
                 if (currentTextWidget && data.texts && data.texts[data.index] !== undefined) {
                     currentTextWidget.value = data.texts[data.index];
                 }
 
                 // Store all_texts in hidden widget
-                const allTextsWidget = node.widgets?.find(w => w.name === "all_texts");
+                const allTextsWidget = getWidget(node, "all_texts");
                 if (allTextsWidget && data.texts) {
                     allTextsWidget.value = JSON.stringify(data.texts);
                 }
 
                 // Update index widget
-                const indexWidget = node.widgets?.find(w => w.name === "current_index");
+                const indexWidget = getWidget(node, "current_index");
                 if (indexWidget) {
                     indexWidget.value = data.index;
                 }
@@ -94,27 +99,28 @@ app.registerExtension({
 
                 const node = this;
 
-                // Helper function to hide widgets properly
-                function hideWidget(node, widgetName) {
-                    const widget = node.widgets?.find(w => w.name === widgetName);
-                    if (widget) {
-                        widget.type = "hidden";
-                        widget.computeSize = () => [0, -4];
-                        widget.serializeValue = () => widget.value;
-                    }
-                }
-
-                // Hide internal widgets (controlled by buttons) - defer to ensure widgets exist
+                // Remove unwanted widgets from display (keep current_text visible)
                 setTimeout(() => {
-                    hideWidget(node, "ready");
-                    hideWidget(node, "current_index");
-                    hideWidget(node, "all_texts");
-                    node.setDirtyCanvas(true);
+                    if (node.widgets) {
+                        // Find widgets to hide
+                        const widgetsToHide = ["ready", "current_index", "all_texts"];
+                        for (const name of widgetsToHide) {
+                            const idx = node.widgets.findIndex(w => w.name === name);
+                            if (idx !== -1) {
+                                const widget = node.widgets[idx];
+                                // Store reference for later access
+                                node["_" + name + "Widget"] = widget;
+                                // Remove from visible widgets array
+                                node.widgets.splice(idx, 1);
+                            }
+                        }
+                        node.setSize(node.computeSize());
+                    }
                 }, 0);
 
                 // Create image preview element
                 const imgContainer = document.createElement("div");
-                imgContainer.style.cssText = "width:100%;display:flex;flex-direction:column;align-items:center;padding:10px;box-sizing:border-box;";
+                imgContainer.style.cssText = "width:100%;display:flex;flex-direction:column;align-items:center;padding:8px;box-sizing:border-box;";
 
                 const img = document.createElement("img");
                 img.style.cssText = "max-width:100%;max-height:280px;border-radius:4px;margin-bottom:8px;object-fit:contain;";
@@ -153,15 +159,20 @@ app.registerExtension({
                 });
                 imgWidget.computeSize = () => [node.size[0], 350];
 
+                // Helper function to get widget (either from array or stored reference)
+                function getWidget(node, name) {
+                    return node.widgets?.find(w => w.name === name) || node["_" + name + "Widget"];
+                }
+
                 // Helper function to navigate images
                 function navigateImage(node, direction) {
-                    const indexWidget = node.widgets?.find(w => w.name === "current_index");
-                    const currentTextWidget = node.widgets?.find(w => w.name === "current_text");
-                    const allTextsWidget = node.widgets?.find(w => w.name === "all_texts");
+                    const indexWidget = getWidget(node, "current_index");
+                    const currentTextWidget = getWidget(node, "current_text");
+                    const allTextsWidget = getWidget(node, "all_texts");
 
                     if (!indexWidget || !node._iteratorData) return;
 
-                    const currentIdx = indexWidget.value;
+                    const currentIdx = indexWidget.value || 0;
                     const total = node._iteratorData.total || 1;
 
                     // Save current text to all_texts array before navigating
@@ -211,11 +222,11 @@ app.registerExtension({
                 continueBtn.style.cssText = "padding:8px 16px;cursor:pointer;border-radius:4px;border:1px solid #4a4;background:#363;color:#fff;font-weight:bold;";
                 continueBtn.onclick = () => {
                     // Save current text before continuing
-                    const indexWidget = node.widgets?.find(w => w.name === "current_index");
-                    const currentTextWidget = node.widgets?.find(w => w.name === "current_text");
-                    const allTextsWidget = node.widgets?.find(w => w.name === "all_texts");
+                    const indexWidget = getWidget(node, "current_index");
+                    const currentTextWidget = getWidget(node, "current_text");
+                    const allTextsWidget = getWidget(node, "all_texts");
 
-                    if (indexWidget && currentTextWidget && allTextsWidget) {
+                    if (currentTextWidget && allTextsWidget) {
                         let texts = [];
                         try {
                             texts = JSON.parse(allTextsWidget.value || "[]");
@@ -223,7 +234,7 @@ app.registerExtension({
                             texts = [];
                         }
 
-                        const currentIdx = indexWidget.value;
+                        const currentIdx = indexWidget?.value || 0;
                         while (texts.length <= currentIdx) {
                             texts.push("");
                         }
@@ -232,7 +243,7 @@ app.registerExtension({
                     }
 
                     // Set ready and queue
-                    const readyWidget = node.widgets?.find(w => w.name === "ready");
+                    const readyWidget = getWidget(node, "ready");
                     if (readyWidget) {
                         readyWidget.value = true;
                     }
@@ -245,10 +256,10 @@ app.registerExtension({
                 resetBtn.textContent = "Reset All";
                 resetBtn.style.cssText = "padding:6px 16px;cursor:pointer;border-radius:4px;border:1px solid #666;background:#444;color:#aaa;";
                 resetBtn.onclick = () => {
-                    const indexWidget = node.widgets?.find(w => w.name === "current_index");
-                    const currentTextWidget = node.widgets?.find(w => w.name === "current_text");
-                    const allTextsWidget = node.widgets?.find(w => w.name === "all_texts");
-                    const readyWidget = node.widgets?.find(w => w.name === "ready");
+                    const indexWidget = getWidget(node, "current_index");
+                    const currentTextWidget = getWidget(node, "current_text");
+                    const allTextsWidget = getWidget(node, "all_texts");
+                    const readyWidget = getWidget(node, "ready");
 
                     if (indexWidget) indexWidget.value = 0;
                     if (currentTextWidget) currentTextWidget.value = "";
@@ -276,6 +287,9 @@ app.registerExtension({
             nodeType.prototype.onExecuted = function (message) {
                 onExecuted?.apply(this, arguments);
 
+                // Helper to get widget
+                const getWidget = (name) => this.widgets?.find(w => w.name === name) || this["_" + name + "Widget"];
+
                 // Update preview from message
                 if (message?.image?.[0] && this.imageEl) {
                     this.imageEl.src = `data:image/png;base64,${message.image[0]}`;
@@ -287,7 +301,7 @@ app.registerExtension({
                 }
 
                 // Reset ready state after processing completes
-                const readyWidget = this.widgets?.find(w => w.name === "ready");
+                const readyWidget = getWidget("ready");
                 if (readyWidget) {
                     readyWidget.value = false;
                 }
