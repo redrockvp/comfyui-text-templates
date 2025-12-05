@@ -1,4 +1,6 @@
 import os
+import io
+import base64
 from PIL import Image
 import numpy as np
 import torch
@@ -208,3 +210,101 @@ class SaveImagesToFolder:
             filepaths.append(filepath)
 
         return (filepaths,)
+
+
+class ImageTextIterator:
+    """
+    Iterate through a batch of images one at a time with text editing.
+    Shows a preview of the current image and allows editing context text.
+
+    Usage:
+    1. Connect images and filenames from LoadImagesFromFolder
+    2. Enable 'block' to pause on each image
+    3. Run workflow - shows first image preview with filename
+    4. Edit the text to add context
+    5. Click Continue to process this image and move to the next
+    6. Repeat until all images are processed
+    """
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "images": ("IMAGE",),
+                "filenames": ("STRING", {"forceInput": True}),
+                "index": ("INT", {"default": 0, "min": 0, "max": 10000}),
+                "text": ("STRING", {"multiline": True, "default": ""}),
+                "block": ("BOOLEAN", {"default": True}),
+                "ready": ("BOOLEAN", {"default": False}),
+            },
+        }
+
+    INPUT_IS_LIST = True
+    RETURN_TYPES = ("IMAGE", "STRING", "INT", "INT")
+    RETURN_NAMES = ("image", "text", "index", "total")
+    FUNCTION = "iterate"
+    CATEGORY = "image"
+    OUTPUT_NODE = True
+
+    def iterate(self, images, filenames, index, text, block, ready):
+        # Extract scalar values from lists
+        idx = index[0] if isinstance(index, list) else index
+        txt = text[0] if isinstance(text, list) else text
+        blk = block[0] if isinstance(block, list) else block
+        rdy = ready[0] if isinstance(ready, list) else ready
+
+        total = len(images)
+
+        # Clamp index to valid range
+        idx = max(0, min(idx, total - 1))
+
+        # Get current image and filename
+        current_image = images[idx]
+        current_filename = filenames[idx] if idx < len(filenames) else ""
+
+        # Create base64 preview of current image
+        if len(current_image.shape) == 4:
+            img_tensor = current_image[0]
+        else:
+            img_tensor = current_image
+        img_array = (img_tensor.cpu().numpy() * 255).astype(np.uint8)
+        pil_img = Image.fromarray(img_array)
+
+        # Resize for preview (max 512px)
+        max_size = 512
+        if pil_img.width > max_size or pil_img.height > max_size:
+            ratio = min(max_size / pil_img.width, max_size / pil_img.height)
+            new_size = (int(pil_img.width * ratio), int(pil_img.height * ratio))
+            pil_img = pil_img.resize(new_size, Image.Resampling.LANCZOS)
+
+        buffer = io.BytesIO()
+        pil_img.save(buffer, format="PNG")
+        img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+        if blk and not rdy:
+            # Blocking mode, not ready - pause for editing
+            from server import PromptServer
+            import execution
+
+            # Send image preview and filename to frontend
+            PromptServer.instance.send_sync("image_text_iterator_update", {
+                "image": img_base64,
+                "filename": current_filename,
+                "index": idx,
+                "total": total,
+            })
+
+            raise execution.InterruptProcessingException()
+
+        # Ready to output - use edited text (or filename if empty)
+        output_text = txt if txt else current_filename
+
+        return {
+            "ui": {
+                "image": [img_base64],
+                "filename": [current_filename],
+                "index": [idx],
+                "total": [total],
+            },
+            "result": (current_image, output_text, idx, total)
+        }
