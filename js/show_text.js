@@ -94,46 +94,54 @@ app.registerExtension({
 
                 const node = this;
 
-                // Hide internal widgets (controlled by buttons)
-                const widgetsToHide = ["ready", "current_index", "all_texts"];
-                for (const widgetName of widgetsToHide) {
+                // Helper function to hide widgets properly
+                function hideWidget(node, widgetName) {
                     const widget = node.widgets?.find(w => w.name === widgetName);
                     if (widget) {
                         widget.type = "hidden";
                         widget.computeSize = () => [0, -4];
+                        widget.serializeValue = () => widget.value;
                     }
                 }
 
+                // Hide internal widgets (controlled by buttons) - defer to ensure widgets exist
+                setTimeout(() => {
+                    hideWidget(node, "ready");
+                    hideWidget(node, "current_index");
+                    hideWidget(node, "all_texts");
+                    node.setDirtyCanvas(true);
+                }, 0);
+
                 // Create image preview element
                 const imgContainer = document.createElement("div");
-                imgContainer.style.cssText = "width:100%;display:flex;flex-direction:column;align-items:center;padding:5px;";
+                imgContainer.style.cssText = "width:100%;display:flex;flex-direction:column;align-items:center;padding:10px;box-sizing:border-box;";
 
                 const img = document.createElement("img");
-                img.style.cssText = "max-width:100%;max-height:300px;border-radius:4px;margin-bottom:5px;";
+                img.style.cssText = "max-width:100%;max-height:280px;border-radius:4px;margin-bottom:8px;object-fit:contain;";
                 img.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
                 node.imageEl = img;
                 imgContainer.appendChild(img);
 
                 // Counter display
                 const counter = document.createElement("div");
-                counter.style.cssText = "font-size:12px;color:#aaa;margin-bottom:5px;";
+                counter.style.cssText = "font-size:12px;color:#aaa;margin-bottom:8px;";
                 counter.textContent = "Image 0 of 0";
                 node.counterEl = counter;
                 imgContainer.appendChild(counter);
 
                 // Navigation buttons container
                 const navContainer = document.createElement("div");
-                navContainer.style.cssText = "display:flex;gap:10px;margin-bottom:5px;";
+                navContainer.style.cssText = "display:flex;gap:10px;margin-bottom:8px;";
 
                 const prevBtn = document.createElement("button");
                 prevBtn.textContent = "< Prev";
-                prevBtn.style.cssText = "padding:5px 15px;cursor:pointer;";
+                prevBtn.style.cssText = "padding:6px 20px;cursor:pointer;border-radius:4px;border:1px solid #666;background:#444;color:#fff;";
                 prevBtn.onclick = () => navigateImage(node, -1);
                 navContainer.appendChild(prevBtn);
 
                 const nextBtn = document.createElement("button");
                 nextBtn.textContent = "Next >";
-                nextBtn.style.cssText = "padding:5px 15px;cursor:pointer;";
+                nextBtn.style.cssText = "padding:6px 20px;cursor:pointer;border-radius:4px;border:1px solid #666;background:#444;color:#fff;";
                 nextBtn.onclick = () => navigateImage(node, 1);
                 navContainer.appendChild(nextBtn);
 
@@ -143,7 +151,7 @@ app.registerExtension({
                 const imgWidget = node.addDOMWidget("image_preview", "div", imgContainer, {
                     serialize: false,
                 });
-                imgWidget.computeSize = () => [node.size[0], 360];
+                imgWidget.computeSize = () => [node.size[0], 350];
 
                 // Helper function to navigate images
                 function navigateImage(node, direction) {
@@ -194,8 +202,14 @@ app.registerExtension({
                     app.queuePrompt(0, 1);
                 }
 
-                // Add Continue button - outputs all images with their texts
-                const continueBtn = node.addWidget("button", "continue_btn", "Continue (Process All)", () => {
+                // Action buttons container
+                const actionContainer = document.createElement("div");
+                actionContainer.style.cssText = "width:100%;display:flex;flex-direction:column;gap:6px;padding:0 10px;box-sizing:border-box;";
+
+                const continueBtn = document.createElement("button");
+                continueBtn.textContent = "Continue (Process All)";
+                continueBtn.style.cssText = "padding:8px 16px;cursor:pointer;border-radius:4px;border:1px solid #4a4;background:#363;color:#fff;font-weight:bold;";
+                continueBtn.onclick = () => {
                     // Save current text before continuing
                     const indexWidget = node.widgets?.find(w => w.name === "current_index");
                     const currentTextWidget = node.widgets?.find(w => w.name === "current_text");
@@ -224,11 +238,13 @@ app.registerExtension({
                     }
                     node.bgcolor = null;
                     app.queuePrompt(0, 1);
-                });
-                continueBtn.serialize = false;
+                };
+                actionContainer.appendChild(continueBtn);
 
-                // Add Reset button - clear all texts and go back to first
-                const resetBtn = node.addWidget("button", "reset_btn", "Reset All", () => {
+                const resetBtn = document.createElement("button");
+                resetBtn.textContent = "Reset All";
+                resetBtn.style.cssText = "padding:6px 16px;cursor:pointer;border-radius:4px;border:1px solid #666;background:#444;color:#aaa;";
+                resetBtn.onclick = () => {
                     const indexWidget = node.widgets?.find(w => w.name === "current_index");
                     const currentTextWidget = node.widgets?.find(w => w.name === "current_text");
                     const allTextsWidget = node.widgets?.find(w => w.name === "all_texts");
@@ -242,11 +258,17 @@ app.registerExtension({
                     node._iteratorData = null;
                     node.bgcolor = null;
                     app.graph.setDirtyCanvas(true);
+                };
+                actionContainer.appendChild(resetBtn);
+
+                // Add action buttons as DOM widget
+                const actionWidget = node.addDOMWidget("action_buttons", "div", actionContainer, {
+                    serialize: false,
                 });
-                resetBtn.serialize = false;
+                actionWidget.computeSize = () => [node.size[0], 70];
 
                 // Set default size
-                node.setSize([350, 580]);
+                node.setSize([350, 550]);
             };
 
             // After execution completes
