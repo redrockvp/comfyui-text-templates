@@ -99,30 +99,34 @@ app.registerExtension({
 
                 const node = this;
 
-                // Properly hide unwanted widgets (keep current_text visible)
+                // Completely remove unwanted widgets from array (keep current_text visible)
                 setTimeout(() => {
                     if (node.widgets) {
                         const widgetsToHide = ["ready", "current_index", "all_texts"];
-                        for (const name of widgetsToHide) {
-                            const widget = node.widgets.find(w => w.name === name);
-                            if (widget) {
+                        // Remove in reverse to not mess up indices
+                        for (let i = node.widgets.length - 1; i >= 0; i--) {
+                            const widget = node.widgets[i];
+                            if (widgetsToHide.includes(widget.name)) {
                                 // Store reference for later access
-                                node["_" + name + "Widget"] = widget;
-                                // Hide the widget completely
-                                widget.computeSize = () => [0, 0];
-                                widget.type = "hidden";
-                                // Hide DOM element if it exists (for multiline STRING widgets)
-                                if (widget.inputEl) {
-                                    widget.inputEl.style.display = "none";
+                                node["_" + widget.name + "Widget"] = widget;
+                                // Remove from array
+                                node.widgets.splice(i, 1);
+                                // Also remove any DOM elements
+                                if (widget.inputEl && widget.inputEl.parentNode) {
+                                    widget.inputEl.parentNode.removeChild(widget.inputEl);
                                 }
-                                if (widget.element) {
-                                    widget.element.style.display = "none";
+                                if (widget.element && widget.element.parentNode) {
+                                    widget.element.parentNode.removeChild(widget.element);
                                 }
                             }
                         }
-                        node.setSize([350, 520]);
+                        // Recalculate size
+                        requestAnimationFrame(() => {
+                            node.setSize([350, 500]);
+                            node.setDirtyCanvas(true, true);
+                        });
                     }
-                }, 10);
+                }, 50);
 
                 // Create image preview element
                 const imgContainer = document.createElement("div");
