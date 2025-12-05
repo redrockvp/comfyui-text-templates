@@ -99,24 +99,30 @@ app.registerExtension({
 
                 const node = this;
 
-                // Remove unwanted widgets from display (keep current_text visible)
+                // Properly hide unwanted widgets (keep current_text visible)
                 setTimeout(() => {
                     if (node.widgets) {
-                        // Find widgets to hide
                         const widgetsToHide = ["ready", "current_index", "all_texts"];
                         for (const name of widgetsToHide) {
-                            const idx = node.widgets.findIndex(w => w.name === name);
-                            if (idx !== -1) {
-                                const widget = node.widgets[idx];
+                            const widget = node.widgets.find(w => w.name === name);
+                            if (widget) {
                                 // Store reference for later access
                                 node["_" + name + "Widget"] = widget;
-                                // Remove from visible widgets array
-                                node.widgets.splice(idx, 1);
+                                // Hide the widget completely
+                                widget.computeSize = () => [0, 0];
+                                widget.type = "hidden";
+                                // Hide DOM element if it exists (for multiline STRING widgets)
+                                if (widget.inputEl) {
+                                    widget.inputEl.style.display = "none";
+                                }
+                                if (widget.element) {
+                                    widget.element.style.display = "none";
+                                }
                             }
                         }
-                        node.setSize(node.computeSize());
+                        node.setSize([350, 520]);
                     }
-                }, 0);
+                }, 10);
 
                 // Create image preview element
                 const imgContainer = document.createElement("div");
@@ -157,7 +163,7 @@ app.registerExtension({
                 const imgWidget = node.addDOMWidget("image_preview", "div", imgContainer, {
                     serialize: false,
                 });
-                imgWidget.computeSize = () => [node.size[0], 350];
+                imgWidget.computeSize = () => [node.size[0], 330];
 
                 // Helper function to get widget (either from array or stored reference)
                 function getWidget(node, name) {

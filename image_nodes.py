@@ -237,7 +237,7 @@ class ImageTextIterator:
             "optional": {
                 "current_text": ("STRING", {"multiline": True, "default": ""}),
                 "current_index": ("INT", {"default": 0, "min": 0, "max": 10000}),
-                "all_texts": ("STRING", {"multiline": True, "default": ""}),
+                "all_texts": ("STRING", {"default": ""}),
                 "ready": ("BOOLEAN", {"default": False}),
             },
         }
