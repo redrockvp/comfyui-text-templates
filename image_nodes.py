@@ -214,16 +214,17 @@ class SaveImagesToFolder:
 
 class ImageTextIterator:
     """
-    Iterate through a batch of images one at a time with text editing.
-    Shows a preview of the current image and allows editing context text.
+    Browse through images and set text for each before processing.
+
+    Use Prev/Next buttons to browse images and edit text for each.
+    The text for each image is stored. When ready, click Continue to
+    output all images with their corresponding texts.
 
     Usage:
     1. Connect images and filenames from LoadImagesFromFolder
-    2. Enable 'block' to pause on each image
-    3. Run workflow - shows first image preview with filename
-    4. Edit the text to add context
-    5. Click Continue to process this image and move to the next
-    6. Repeat until all images are processed
+    2. Run workflow - shows first image with filename as default text
+    3. Use Prev/Next to browse images, edit text for each
+    4. Click Continue when all texts are set - outputs all images + texts
     """
 
     @classmethod
@@ -232,37 +233,50 @@ class ImageTextIterator:
             "required": {
                 "images": ("IMAGE",),
                 "filenames": ("STRING", {"forceInput": True}),
-                "index": ("INT", {"default": 0, "min": 0, "max": 10000}),
-                "text": ("STRING", {"multiline": True, "default": ""}),
-                "block": ("BOOLEAN", {"default": True}),
+                "current_index": ("INT", {"default": 0, "min": 0, "max": 10000}),
+                "current_text": ("STRING", {"multiline": True, "default": ""}),
+                "all_texts": ("STRING", {"multiline": True, "default": ""}),
                 "ready": ("BOOLEAN", {"default": False}),
             },
         }
 
     INPUT_IS_LIST = True
-    RETURN_TYPES = ("IMAGE", "STRING", "INT", "INT")
-    RETURN_NAMES = ("image", "text", "index", "total")
-    FUNCTION = "iterate"
+    RETURN_TYPES = ("IMAGE", "STRING", "STRING", "INT")
+    RETURN_NAMES = ("images", "texts", "filenames", "count")
+    OUTPUT_IS_LIST = (True, True, True, False)
+    FUNCTION = "process"
     CATEGORY = "image"
     OUTPUT_NODE = True
 
-    def iterate(self, images, filenames, index, text, block, ready):
+    def process(self, images, filenames, current_index, current_text, all_texts, ready):
+        import json
+
         # Extract scalar values from lists
-        idx = index[0] if isinstance(index, list) else index
-        txt = text[0] if isinstance(text, list) else text
-        blk = block[0] if isinstance(block, list) else block
+        idx = current_index[0] if isinstance(current_index, list) else current_index
+        cur_txt = current_text[0] if isinstance(current_text, list) else current_text
+        all_txt = all_texts[0] if isinstance(all_texts, list) else all_texts
         rdy = ready[0] if isinstance(ready, list) else ready
 
         total = len(images)
-
-        # Clamp index to valid range
         idx = max(0, min(idx, total - 1))
 
-        # Get current image and filename
+        # Parse stored texts (JSON array) or initialize
+        try:
+            texts_array = json.loads(all_txt) if all_txt else []
+        except json.JSONDecodeError:
+            texts_array = []
+
+        # Ensure array is right size, fill with filenames as defaults
+        while len(texts_array) < total:
+            default_idx = len(texts_array)
+            default_text = filenames[default_idx] if default_idx < len(filenames) else ""
+            texts_array.append(default_text)
+
+        # Get current image for preview
         current_image = images[idx]
         current_filename = filenames[idx] if idx < len(filenames) else ""
 
-        # Create base64 preview of current image
+        # Create base64 preview
         if len(current_image.shape) == 4:
             img_tensor = current_image[0]
         else:
@@ -270,7 +284,6 @@ class ImageTextIterator:
         img_array = (img_tensor.cpu().numpy() * 255).astype(np.uint8)
         pil_img = Image.fromarray(img_array)
 
-        # Resize for preview (max 512px)
         max_size = 512
         if pil_img.width > max_size or pil_img.height > max_size:
             ratio = min(max_size / pil_img.width, max_size / pil_img.height)
@@ -281,18 +294,19 @@ class ImageTextIterator:
         pil_img.save(buffer, format="PNG")
         img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-        # Always send preview to frontend
+        # Send preview to frontend
         from server import PromptServer
         PromptServer.instance.send_sync("image_text_iterator_update", {
             "image": img_base64,
             "filename": current_filename,
             "index": idx,
             "total": total,
-            "paused": blk and not rdy,
+            "texts": texts_array,
+            "ready": rdy,
         })
 
-        if blk and not rdy:
-            # Blocking mode, not ready - use ExecutionBlocker to pause downstream
+        if not rdy:
+            # Not ready - block execution, let user browse and edit
             try:
                 from comfy_execution.graph import ExecutionBlocker
                 return {
@@ -301,25 +315,21 @@ class ImageTextIterator:
                         "filename": [current_filename],
                         "index": [idx],
                         "total": [total],
-                        "paused": [True],
                     },
                     "result": (ExecutionBlocker(None), ExecutionBlocker(None), ExecutionBlocker(None), ExecutionBlocker(None))
                 }
             except ImportError:
-                # Fallback for older ComfyUI versions - just return with interrupt
                 import nodes
                 nodes.interrupt_processing()
+                return {"ui": {}, "result": (images, texts_array, filenames, total)}
 
-        # Use edited text (or filename if empty)
-        output_text = txt if txt else current_filename
-
+        # Ready - output all images with their texts
         return {
             "ui": {
                 "image": [img_base64],
                 "filename": [current_filename],
                 "index": [idx],
                 "total": [total],
-                "paused": [False],
             },
-            "result": (current_image, output_text, idx, total)
+            "result": (images, texts_array, filenames, total)
         }

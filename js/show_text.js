@@ -35,7 +35,7 @@ app.registerExtension({
     },
 });
 
-// ImageTextIterator extension - image preview with text editing for batch iteration
+// ImageTextIterator extension - browse images, set text for each, then output all
 app.registerExtension({
     name: "comfyui-text-templates.ImageTextIterator",
     async setup() {
@@ -46,18 +46,12 @@ app.registerExtension({
 
             const nodes = app.graph._nodes.filter(n => n.type === "ImageTextIterator");
             for (const node of nodes) {
-                const blockWidget = node.widgets?.find(w => w.name === "block");
-                if (!blockWidget?.value) continue;
+                // Store data for navigation
+                node._iteratorData = data;
 
                 // Update image preview
                 if (data.image && node.imageEl) {
                     node.imageEl.src = `data:image/png;base64,${data.image}`;
-                }
-
-                // Update text widget with filename (if empty)
-                const textWidget = node.widgets?.find(w => w.name === "text");
-                if (textWidget && !textWidget.value) {
-                    textWidget.value = data.filename || "";
                 }
 
                 // Update counter display
@@ -65,14 +59,28 @@ app.registerExtension({
                     node.counterEl.textContent = `Image ${data.index + 1} of ${data.total}`;
                 }
 
-                // Reset ready state
-                const readyWidget = node.widgets?.find(w => w.name === "ready");
-                if (readyWidget) {
-                    readyWidget.value = false;
+                // Update current_text widget with the text for this image
+                const currentTextWidget = node.widgets?.find(w => w.name === "current_text");
+                if (currentTextWidget && data.texts && data.texts[data.index] !== undefined) {
+                    currentTextWidget.value = data.texts[data.index];
                 }
 
-                // Highlight node
-                node.bgcolor = "#335533";
+                // Store all_texts in hidden widget
+                const allTextsWidget = node.widgets?.find(w => w.name === "all_texts");
+                if (allTextsWidget && data.texts) {
+                    allTextsWidget.value = JSON.stringify(data.texts);
+                }
+
+                // Update index widget
+                const indexWidget = node.widgets?.find(w => w.name === "current_index");
+                if (indexWidget) {
+                    indexWidget.value = data.index;
+                }
+
+                // Highlight node when waiting for input
+                if (!data.ready) {
+                    node.bgcolor = "#335533";
+                }
             }
             app.graph.setDirtyCanvas(true);
         });
@@ -86,11 +94,14 @@ app.registerExtension({
 
                 const node = this;
 
-                // Hide ready checkbox
-                const readyWidget = node.widgets?.find(w => w.name === "ready");
-                if (readyWidget) {
-                    readyWidget.type = "hidden";
-                    readyWidget.computeSize = () => [0, -4];
+                // Hide internal widgets (controlled by buttons)
+                const widgetsToHide = ["ready", "current_index", "all_texts"];
+                for (const widgetName of widgetsToHide) {
+                    const widget = node.widgets?.find(w => w.name === widgetName);
+                    if (widget) {
+                        widget.type = "hidden";
+                        widget.computeSize = () => [0, -4];
+                    }
                 }
 
                 // Create image preview element
@@ -110,57 +121,150 @@ app.registerExtension({
                 node.counterEl = counter;
                 imgContainer.appendChild(counter);
 
+                // Navigation buttons container
+                const navContainer = document.createElement("div");
+                navContainer.style.cssText = "display:flex;gap:10px;margin-bottom:5px;";
+
+                const prevBtn = document.createElement("button");
+                prevBtn.textContent = "< Prev";
+                prevBtn.style.cssText = "padding:5px 15px;cursor:pointer;";
+                prevBtn.onclick = () => navigateImage(node, -1);
+                navContainer.appendChild(prevBtn);
+
+                const nextBtn = document.createElement("button");
+                nextBtn.textContent = "Next >";
+                nextBtn.style.cssText = "padding:5px 15px;cursor:pointer;";
+                nextBtn.onclick = () => navigateImage(node, 1);
+                navContainer.appendChild(nextBtn);
+
+                imgContainer.appendChild(navContainer);
+
                 // Add image widget
                 const imgWidget = node.addDOMWidget("image_preview", "div", imgContainer, {
                     serialize: false,
                 });
-                imgWidget.computeSize = () => [node.size[0], 320];
+                imgWidget.computeSize = () => [node.size[0], 360];
 
-                // Add Continue button
-                const continueBtn = node.addWidget("button", "continue_btn", "Continue", () => {
-                    const indexWidget = node.widgets?.find(w => w.name === "index");
+                // Helper function to navigate images
+                function navigateImage(node, direction) {
+                    const indexWidget = node.widgets?.find(w => w.name === "current_index");
+                    const currentTextWidget = node.widgets?.find(w => w.name === "current_text");
+                    const allTextsWidget = node.widgets?.find(w => w.name === "all_texts");
+
+                    if (!indexWidget || !node._iteratorData) return;
+
+                    const currentIdx = indexWidget.value;
+                    const total = node._iteratorData.total || 1;
+
+                    // Save current text to all_texts array before navigating
+                    let texts = [];
+                    try {
+                        texts = JSON.parse(allTextsWidget?.value || "[]");
+                    } catch (e) {
+                        texts = [];
+                    }
+
+                    // Ensure array is right size
+                    while (texts.length < total) {
+                        texts.push("");
+                    }
+
+                    // Save current text
+                    if (currentTextWidget) {
+                        texts[currentIdx] = currentTextWidget.value;
+                    }
+
+                    // Calculate new index
+                    let newIdx = currentIdx + direction;
+                    if (newIdx < 0) newIdx = 0;
+                    if (newIdx >= total) newIdx = total - 1;
+
+                    // Update widgets
+                    indexWidget.value = newIdx;
+                    if (allTextsWidget) {
+                        allTextsWidget.value = JSON.stringify(texts);
+                    }
+
+                    // Load text for new image
+                    if (currentTextWidget) {
+                        currentTextWidget.value = texts[newIdx] || "";
+                    }
+
+                    // Queue to refresh the image preview
+                    app.queuePrompt(0, 1);
+                }
+
+                // Add Continue button - outputs all images with their texts
+                const continueBtn = node.addWidget("button", "continue_btn", "Continue (Process All)", () => {
+                    // Save current text before continuing
+                    const indexWidget = node.widgets?.find(w => w.name === "current_index");
+                    const currentTextWidget = node.widgets?.find(w => w.name === "current_text");
+                    const allTextsWidget = node.widgets?.find(w => w.name === "all_texts");
+
+                    if (indexWidget && currentTextWidget && allTextsWidget) {
+                        let texts = [];
+                        try {
+                            texts = JSON.parse(allTextsWidget.value || "[]");
+                        } catch (e) {
+                            texts = [];
+                        }
+
+                        const currentIdx = indexWidget.value;
+                        while (texts.length <= currentIdx) {
+                            texts.push("");
+                        }
+                        texts[currentIdx] = currentTextWidget.value;
+                        allTextsWidget.value = JSON.stringify(texts);
+                    }
+
+                    // Set ready and queue
                     const readyWidget = node.widgets?.find(w => w.name === "ready");
-
                     if (readyWidget) {
                         readyWidget.value = true;
                     }
-
                     node.bgcolor = null;
                     app.queuePrompt(0, 1);
                 });
                 continueBtn.serialize = false;
 
-                // Add Next button (increment index after processing)
-                const nextBtn = node.addWidget("button", "next_btn", "Next Image", () => {
-                    const indexWidget = node.widgets?.find(w => w.name === "index");
-                    if (indexWidget) {
-                        indexWidget.value = (indexWidget.value || 0) + 1;
-                    }
-                    // Clear text for next image
-                    const textWidget = node.widgets?.find(w => w.name === "text");
-                    if (textWidget) {
-                        textWidget.value = "";
-                    }
+                // Add Reset button - clear all texts and go back to first
+                const resetBtn = node.addWidget("button", "reset_btn", "Reset All", () => {
+                    const indexWidget = node.widgets?.find(w => w.name === "current_index");
+                    const currentTextWidget = node.widgets?.find(w => w.name === "current_text");
+                    const allTextsWidget = node.widgets?.find(w => w.name === "all_texts");
+                    const readyWidget = node.widgets?.find(w => w.name === "ready");
+
+                    if (indexWidget) indexWidget.value = 0;
+                    if (currentTextWidget) currentTextWidget.value = "";
+                    if (allTextsWidget) allTextsWidget.value = "";
+                    if (readyWidget) readyWidget.value = false;
+
+                    node._iteratorData = null;
+                    node.bgcolor = null;
                     app.graph.setDirtyCanvas(true);
                 });
-                nextBtn.serialize = false;
+                resetBtn.serialize = false;
 
                 // Set default size
-                node.setSize([350, 550]);
+                node.setSize([350, 580]);
             };
 
-            // Update preview after execution
+            // After execution completes
             const onExecuted = nodeType.prototype.onExecuted;
             nodeType.prototype.onExecuted = function (message) {
                 onExecuted?.apply(this, arguments);
 
+                // Update preview from message
                 if (message?.image?.[0] && this.imageEl) {
                     this.imageEl.src = `data:image/png;base64,${message.image[0]}`;
                 }
                 if (message?.index !== undefined && message?.total !== undefined && this.counterEl) {
-                    this.counterEl.textContent = `Image ${message.index[0] + 1} of ${message.total[0]}`;
+                    const currentIdx = message.index[0];
+                    const total = message.total[0];
+                    this.counterEl.textContent = `Image ${currentIdx + 1} of ${total}`;
                 }
 
+                // Reset ready state after processing completes
                 const readyWidget = this.widgets?.find(w => w.name === "ready");
                 if (readyWidget) {
                     readyWidget.value = false;
