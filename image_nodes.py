@@ -281,22 +281,36 @@ class ImageTextIterator:
         pil_img.save(buffer, format="PNG")
         img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
+        # Always send preview to frontend
+        from server import PromptServer
+        PromptServer.instance.send_sync("image_text_iterator_update", {
+            "image": img_base64,
+            "filename": current_filename,
+            "index": idx,
+            "total": total,
+            "paused": blk and not rdy,
+        })
+
         if blk and not rdy:
-            # Blocking mode, not ready - pause for editing
-            from server import PromptServer
-            from comfy.model_management import InterruptProcessingException
+            # Blocking mode, not ready - use ExecutionBlocker to pause downstream
+            try:
+                from comfy_execution.graph import ExecutionBlocker
+                return {
+                    "ui": {
+                        "image": [img_base64],
+                        "filename": [current_filename],
+                        "index": [idx],
+                        "total": [total],
+                        "paused": [True],
+                    },
+                    "result": (ExecutionBlocker(None), ExecutionBlocker(None), ExecutionBlocker(None), ExecutionBlocker(None))
+                }
+            except ImportError:
+                # Fallback for older ComfyUI versions - just return with interrupt
+                import nodes
+                nodes.interrupt_processing()
 
-            # Send image preview and filename to frontend
-            PromptServer.instance.send_sync("image_text_iterator_update", {
-                "image": img_base64,
-                "filename": current_filename,
-                "index": idx,
-                "total": total,
-            })
-
-            raise InterruptProcessingException()
-
-        # Ready to output - use edited text (or filename if empty)
+        # Use edited text (or filename if empty)
         output_text = txt if txt else current_filename
 
         return {
@@ -305,6 +319,7 @@ class ImageTextIterator:
                 "filename": [current_filename],
                 "index": [idx],
                 "total": [total],
+                "paused": [False],
             },
             "result": (current_image, output_text, idx, total)
         }

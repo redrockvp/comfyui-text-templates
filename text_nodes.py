@@ -62,20 +62,28 @@ class TextInputPause:
     OUTPUT_NODE = True
 
     def execute(self, text, block, ready, text_input=None):
+        from server import PromptServer
+
         if not block:
             # Blocking disabled - pass through input or use widget text
             output_text = text_input if text_input is not None else text
         elif not ready:
-            # Blocking enabled but not ready - pause for editing
-            from server import PromptServer
-            from comfy.model_management import InterruptProcessingException
-
-            # Send input text to frontend to populate the widget
+            # Blocking enabled but not ready - send text to frontend and block execution
             PromptServer.instance.send_sync("text_input_pause_update", {
                 "text": text_input if text_input is not None else text,
             })
 
-            raise InterruptProcessingException()
+            try:
+                from comfy_execution.graph import ExecutionBlocker
+                return {
+                    "ui": {"text": [text_input if text_input is not None else text]},
+                    "result": (ExecutionBlocker(None),)
+                }
+            except ImportError:
+                # Fallback for older ComfyUI versions
+                import nodes
+                nodes.interrupt_processing()
+                output_text = text_input if text_input is not None else text
         else:
             # Blocking enabled and ready - use the edited text
             output_text = text if text else (text_input or "")
