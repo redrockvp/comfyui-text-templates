@@ -284,7 +284,7 @@ class ImageTextIterator:
         if blk and not rdy:
             # Blocking mode, not ready - pause for editing
             from server import PromptServer
-            import execution
+            from comfy.model_management import InterruptProcessingException
 
             # Send image preview and filename to frontend
             PromptServer.instance.send_sync("image_text_iterator_update", {
@@ -294,7 +294,7 @@ class ImageTextIterator:
                 "total": total,
             })
 
-            raise execution.InterruptProcessingException()
+            raise InterruptProcessingException()
 
         # Ready to output - use edited text (or filename if empty)
         output_text = txt if txt else current_filename

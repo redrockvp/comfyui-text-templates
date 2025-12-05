@@ -68,14 +68,14 @@ class TextInputPause:
         elif not ready:
             # Blocking enabled but not ready - pause for editing
             from server import PromptServer
-            import execution
+            from comfy.model_management import InterruptProcessingException
 
             # Send input text to frontend to populate the widget
             PromptServer.instance.send_sync("text_input_pause_update", {
                 "text": text_input if text_input is not None else text,
             })
 
-            raise execution.InterruptProcessingException()
+            raise InterruptProcessingException()
         else:
             # Blocking enabled and ready - use the edited text
             output_text = text if text else (text_input or "")
